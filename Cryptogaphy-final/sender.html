@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PctApp - Sender</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333333;
+            margin-bottom: 20px;
+        }
+        textarea, input[type="password"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            overflow-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sender: Enter Text for Encryption</h1>
+        <textarea id="text" rows="4" cols="50"></textarea><br>
+        <label for="code">Enter Secret Key:</label>
+        <input type="password" id="code"><br>
+        <button onclick="encryptAndSend()">Encrypt and Send</button>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        const socket = new WebSocket('ws://localhost:8080');
+
+        var chars = " " + "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~" + "0123456789" + "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        chars = chars.split('');
+        var key = chars.slice().sort(() => Math.random() - 0.5);
+
+        socket.onopen = function(event) {
+            console.log('WebSocket is open now.');
+        };
+
+        socket.onclose = function(event) {
+            console.log('WebSocket is closed now.');
+        };
+
+        socket.onerror = function(event) {
+            console.error('WebSocket error observed:', event);
+        };
+
+        function encryptAndSend() {
+            var password = document.getElementById('code').value;
+
+            if (password === "") {
+                alert("Enter Password");
+                return;
+            }
+
+            var plainText = document.getElementById('text').value.trim();
+            var cipherText = "";
+
+            for (var i = 0; i < plainText.length; i++) {
+                var index = chars.indexOf(plainText[i]);
+                cipherText += key[index];
+            }
+
+            document.getElementById('output').innerText = "Encrypted Text: " + cipherText;
+
+            socket.send(JSON.stringify({ cipherText, key, password }));
+        }
+    </script>
+</body>
+</html>

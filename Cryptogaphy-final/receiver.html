@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PctApp - Receiver</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333333;
+            margin-bottom: 20px;
+        }
+        input[type="password"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Receiver: Enter Secret Key</h1>
+        <label for="code">Enter Secret Key:</label>
+        <input type="password" id="code"><br>
+        <button onclick="decrypt()">Decrypt</button>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        const socket = new WebSocket('ws://localhost:8080');
+
+        var chars = " " + "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~" + "0123456789" + "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        chars = chars.split('');
+        let encryptedMessage = null;
+
+        socket.onopen = function(event) {
+            console.log('WebSocket is open now.');
+        };
+
+        socket.onclose = function(event) {
+            console.log('WebSocket is closed now.');
+        };
+
+        socket.onerror = function(event) {
+            console.error('WebSocket error observed:', event);
+        };
+
+        socket.onmessage = async event => {
+            console.log("Received message:", event.data);
+
+            const messageText = await event.data.text();
+            encryptedMessage = JSON.parse(messageText);
+            alert("New encrypted message received");
+        };
+
+        function decrypt() {
+            if (!encryptedMessage) {
+                alert("No message to decrypt");
+                return;
+            }
+
+            var password = document.getElementById('code').value;
+
+            if (password === "") {
+                alert("Enter Password");
+                return;
+            }
+
+            var cipherText = encryptedMessage.cipherText;
+            var key = encryptedMessage.key;
+
+            // Check if the entered password matches the password used to encrypt the message
+            if (password !== encryptedMessage.password) {
+                document.getElementById('output').innerText = "Invalid secret key";
+                return;
+            }
+
+            var plainText = "";
+
+            for (var i = 0; i < cipherText.length; i++) {
+                var index = key.indexOf(cipherText[i]);
+                plainText += chars[index];
+            }
+
+            document.getElementById('output').innerText = "Decrypted Text: " + plainText;
+        }
+    </script>
+</body>
+</html>
